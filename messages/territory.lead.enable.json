@@ -1,0 +1,17 @@
+{
+  "summary": "Enable Lead support in Territory Management",
+  "description": "Automates enabling Lead support in Enterprise Territory Management through Salesforce Setup UI automation. Navigates to Territory Settings and configures Lead-related options.",
+  "examples": [
+    "Enable Leads with default ReadOnly access",
+    "<%= config.bin %> territory lead enable --target-org myOrg",
+    "",
+    "Enable Leads with ReadWrite access",
+    "<%= config.bin %> territory lead enable --target-org myOrg --default-access ReadWrite",
+    "",
+    "Dry run to see what would happen",
+    "<%= config.bin %> territory lead enable --target-org myOrg --dry-run",
+    "",
+    "Run with debug mode (shows screenshots)",
+    "<%= config.bin %> territory lead enable --target-org myOrg --debug"
+  ]
+}
