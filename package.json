@@ -1,6 +1,6 @@
 {
   "name": "sf-territory-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Salesforce CLI plugin to automate enabling Lead support in Enterprise Territory Management",
   "author": "Boris Thomas",
   "license": "MIT",
