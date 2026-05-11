@@ -20,6 +20,7 @@ Salesforce does not currently expose metadata or API support for this specific c
 ✅ **Headless Browser Automation** - Uses Playwright for reliable Lightning UI interaction  
 ✅ **Lead Support Configuration** - Enables Lead territory support and sets default access levels  
 ✅ **Dry-Run Support** - Preview changes without applying them  
+✅ **Quiet Mode** - Suppress all output for clean script integration  
 ✅ **Debug Mode** - Captures screenshots and verbose logging on failure  
 ✅ **Robust Selectors** - Fallback selector strategies for Lightning UI instability  
 ✅ **Error Recovery** - Retry logic with exponential backoff  
@@ -53,6 +54,22 @@ Enable with ReadWrite access:
 
 ```bash
 sf territory lead enable --target-org myOrg --default-access ReadWrite
+```
+
+### Quiet Mode
+
+Suppress all progress output — useful in scripts where you only care about success or failure:
+
+```bash
+sf territory lead enable --target-org myOrg --quiet
+# or
+sf territory lead enable --target-org myOrg -q
+```
+
+Errors are still printed. Combine with `--json` to get structured output with no noise:
+
+```bash
+sf territory lead enable --target-org myOrg --quiet --json
 ```
 
 ### Dry-Run Mode
@@ -103,6 +120,7 @@ sf territory lead enable [FLAGS]
 | `--default-access` | `-a` | `ReadOnly` | Default Lead access level (`ReadOnly`, `ReadWrite`) |
 | `--dry-run` | | `false` | Show changes without applying them |
 | `--debug` | | `false` | Enable debug mode with screenshots |
+| `--quiet` | `-q` | `false` | Suppress all progress output (for scripts) |
 | `--no-headless` | | `headless=true` | Show browser window |
 | `--timeout` | `-t` | `60000` | Browser timeout in milliseconds |
 | `--screenshots-dir` | | `screenshots` | Directory to save debug screenshots |
