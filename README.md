@@ -1,5 +1,9 @@
 # Salesforce Territory Lead Enable CLI Plugin
 
+[![npm](https://img.shields.io/npm/v/sf-territory-plugin)](https://www.npmjs.com/package/sf-territory-plugin)
+[![CI](https://github.com/BoboJD/sf-territory-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/BoboJD/sf-territory-plugin/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ## Overview
 
 This Salesforce CLI plugin automates enabling Lead support in Enterprise Territory Management through UI automation. It navigates to the Territory Settings page and configures Lead-related options without requiring direct API access.
