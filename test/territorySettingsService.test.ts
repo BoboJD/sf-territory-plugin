@@ -7,8 +7,6 @@ import { Page } from 'playwright';
 import { TerritorySettingsService } from '../src/services/territorySettingsService';
 import { DefaultLeadAccess, TerritorySettings } from '../src/types/territory';
 
-// Stub heavy dependencies so service logic can be tested in isolation
-jest.mock('playwright');
 jest.mock('../src/utils/logger', () => ({
   __esModule: true,
   default: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
@@ -20,37 +18,64 @@ jest.mock('../src/browser/lightningWait', () => ({
   isOnTerritorySettingsPage: jest.fn().mockResolvedValue(true),
 }));
 
+/**
+ * Self-referential locator mock — all chaining methods (first, filter, locator,
+ * getByLabel) return the same object so tests configure a single mock instance.
+ */
+function makeLocator(defaults: { visible?: boolean; checked?: boolean } = {}): jest.Mocked<any> {
+  const loc: any = {
+    count: jest.fn().mockResolvedValue(0),
+    first: jest.fn(),
+    nth: jest.fn(),
+    filter: jest.fn(),
+    locator: jest.fn(),
+    getByLabel: jest.fn(),
+    isVisible: jest.fn().mockResolvedValue(defaults.visible ?? false),
+    isEnabled: jest.fn().mockResolvedValue(true),
+    evaluate: jest.fn().mockResolvedValue(defaults.checked ?? false),
+    scrollIntoViewIfNeeded: jest.fn().mockResolvedValue(undefined),
+    click: jest.fn().mockResolvedValue(undefined),
+    getAttribute: jest.fn().mockResolvedValue(null),
+  };
+  loc.first.mockReturnValue(loc);
+  loc.nth.mockReturnValue(loc);
+  loc.filter.mockReturnValue(loc);
+  loc.locator.mockReturnValue(loc);
+  loc.getByLabel.mockReturnValue(loc);
+  return loc;
+}
+
 describe('TerritorySettingsService', () => {
+  let mockLocator: ReturnType<typeof makeLocator>;
+  let mockFrame: any;
   let mockPage: Partial<Page>;
   let service: TerritorySettingsService;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
+    mockLocator = makeLocator();
+
+    mockFrame = {
+      url: jest.fn().mockReturnValue(''),
+      locator: jest.fn().mockReturnValue(mockLocator),
+      getByLabel: jest.fn().mockReturnValue(mockLocator),
+    };
+
     mockPage = {
-      isVisible: jest.fn().mockResolvedValue(false),
-      isChecked: jest.fn().mockResolvedValue(false),
-      isEnabled: jest.fn().mockResolvedValue(true),
-      url: jest
-        .fn()
-        .mockReturnValue(
-          'https://example.salesforce.com/lightning/setup/Territory2Settings/home'
-        ),
-      click: jest.fn().mockResolvedValue(undefined),
-      fill: jest.fn().mockResolvedValue(undefined),
-      locator: jest.fn().mockReturnValue({
-        scrollIntoViewIfNeeded: jest.fn().mockResolvedValue(undefined),
-        boundingBox: jest.fn().mockResolvedValue(null),
-        isVisible: jest.fn().mockResolvedValue(false),
-      }),
-      waitForSelector: jest.fn().mockResolvedValue(undefined),
+      // page.frames() returns [] → getContentFrame falls through to mainFrame()
+      frames: jest.fn().mockReturnValue([]),
+      mainFrame: jest.fn().mockReturnValue(mockFrame),
+      evaluate: jest.fn().mockResolvedValue(undefined),
       waitForTimeout: jest.fn().mockResolvedValue(undefined),
       reload: jest.fn().mockResolvedValue(undefined),
       waitForLoadState: jest.fn().mockResolvedValue(undefined),
-      content: jest.fn().mockResolvedValue('<html></html>'),
+      url: jest
+        .fn()
+        .mockReturnValue('https://example.salesforce.com/lightning/setup/Territory2Settings/home'),
     };
 
-    service = new TerritorySettingsService(mockPage as unknown as Page, false);
+    service = new TerritorySettingsService(mockPage as unknown as Page);
   });
 
   describe('detectCurrentState', () => {
@@ -62,10 +87,8 @@ describe('TerritorySettingsService', () => {
     });
 
     test('should detect enabled Leads when checkbox is checked', async () => {
-      // First isVisible call for the first checkbox selector returns true
-      (mockPage.isVisible as jest.Mock).mockResolvedValueOnce(true);
-      // isChecked returns true → lead is enabled
-      (mockPage.isChecked as jest.Mock).mockResolvedValueOnce(true);
+      mockLocator.isVisible.mockResolvedValue(true);
+      mockLocator.evaluate.mockResolvedValue(true);
 
       const state = await service.detectCurrentState();
 
@@ -75,18 +98,18 @@ describe('TerritorySettingsService', () => {
 
   describe('enableLeadSupport', () => {
     test('should click the Enable Leads checkbox when found and unchecked', async () => {
-      (mockPage.isVisible as jest.Mock).mockResolvedValue(true);
-      (mockPage.isChecked as jest.Mock)
+      mockLocator.isVisible.mockResolvedValue(true);
+      mockLocator.evaluate
         .mockResolvedValueOnce(false) // initial: unchecked
         .mockResolvedValueOnce(true); // after click: checked
 
       await service.enableLeadSupport();
 
-      expect(mockPage.click).toHaveBeenCalled();
+      expect(mockLocator.click).toHaveBeenCalled();
     });
 
     test('should throw error if no checkbox selector matches', async () => {
-      (mockPage.isVisible as jest.Mock).mockResolvedValue(false);
+      mockLocator.isVisible.mockResolvedValue(false);
 
       await expect(service.enableLeadSupport()).rejects.toThrow(
         'Could not find or click Enable Leads checkbox'
@@ -96,32 +119,32 @@ describe('TerritorySettingsService', () => {
 
   describe('setDefaultLeadAccess', () => {
     test('should click a ReadOnly radio button when found', async () => {
-      (mockPage.isVisible as jest.Mock).mockResolvedValue(true);
+      mockLocator.isVisible.mockResolvedValue(true);
 
       await service.setDefaultLeadAccess(DefaultLeadAccess.ReadOnly);
 
-      expect(mockPage.click).toHaveBeenCalled();
+      expect(mockLocator.click).toHaveBeenCalled();
     });
 
     test('should skip without clicking for None access level', async () => {
       await service.setDefaultLeadAccess(DefaultLeadAccess.None);
 
-      expect(mockPage.click).not.toHaveBeenCalled();
+      expect(mockLocator.click).not.toHaveBeenCalled();
     });
   });
 
   describe('saveConfiguration', () => {
     test('should click a Save button when found and enabled', async () => {
-      (mockPage.isVisible as jest.Mock).mockResolvedValue(true);
-      (mockPage.isEnabled as jest.Mock).mockResolvedValue(true);
+      mockLocator.isVisible.mockResolvedValue(true);
+      mockLocator.isEnabled.mockResolvedValue(true);
 
       await service.saveConfiguration();
 
-      expect(mockPage.click).toHaveBeenCalled();
+      expect(mockLocator.click).toHaveBeenCalled();
     });
 
     test('should throw error if no Save button is found', async () => {
-      (mockPage.isVisible as jest.Mock).mockResolvedValue(false);
+      mockLocator.isVisible.mockResolvedValue(false);
 
       await expect(service.saveConfiguration()).rejects.toThrow(
         'Could not find or click Save button'
@@ -139,7 +162,7 @@ describe('TerritorySettingsService', () => {
       const result = await service.configureTerritorySettings(targetState);
 
       expect(result).toEqual(targetState);
-      expect(mockPage.click).not.toHaveBeenCalled();
+      expect(mockLocator.click).not.toHaveBeenCalled();
     });
   });
 });
