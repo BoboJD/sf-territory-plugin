@@ -30,7 +30,7 @@ Salesforce does not currently expose metadata or API support for this specific c
 
 ```bash
 # Install as a Salesforce CLI plugin
-sf plugins install @salesforce/sf-territory-plugin
+sf plugins install sf-territory-plugin
 
 # Or install from source
 npm install
