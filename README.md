@@ -23,7 +23,7 @@ Salesforce does not currently expose metadata or API support for this specific c
 ✅ **Quiet Mode** - Suppress all output for clean script integration  
 ✅ **Debug Mode** - Captures screenshots and verbose logging on failure  
 ✅ **Robust Selectors** - Fallback selector strategies for Lightning UI instability  
-✅ **Error Recovery** - Retry logic with exponential backoff  
+✅ **Error Recovery** - Fallback candidate loops and spinner-based polling  
 ✅ **Production-Ready** - Type-safe, well-tested, clean architecture  
 
 ## Installation
@@ -215,37 +215,49 @@ src/
 
 ## Selector Strategy
 
-The plugin implements a **multi-strategy fallback approach** for Lightning UI reliability:
+The plugin uses a **two-strategy fallback** for the Enable Leads checkbox, **value-based selectors** for access level radios, and a **class/text/type cascade** for the Save button.
 
-### Strategy Layers
+### Enable Leads Checkbox
 
-1. **Label-based selectors** (preferred)
+1. **Playwright `getByLabel`** (preferred) — matches by accessible name (label text or `aria-label`)
    ```ts
-   label:has-text("Enable Leads")
-   label:has-text("Read Only")
+   frame.getByLabel('Enable Leads', { exact: false })
+   frame.getByLabel('Activer les pistes', { exact: false })  // French orgs
    ```
 
-2. **Aria-label selectors**
+2. **Container + text filter** — finds the `.checkboxContainer` wrapping the label text, then selects the checkbox inside
    ```ts
-   input[aria-label*="Enable"][aria-label*="Lead"]
+   frame.locator('.checkboxContainer')
+     .filter({ hasText: 'Enable Leads' })
+     .locator('input[type="checkbox"]')
    ```
 
-3. **Data-attribute selectors**
-   ```ts
-   input[data-testid="lead-enable-checkbox"]
-   ```
+### Access Level Radios
 
-4. **Role-based selectors**
-   ```ts
-   input[role="checkbox"]
-   ```
+Stable `name` and `value` attributes are used — no text matching:
+
+```ts
+input[type="radio"][name="leadAccessLevel"][value="1"]  // ReadOnly
+input[type="radio"][name="leadAccessLevel"][value="2"]  // ReadWrite
+```
+
+### Save Button
+
+Tried in order until one is visible and enabled:
+
+```ts
+button.saveButton               // Aura-specific CSS class
+button:has-text("Enregistrer") // French orgs
+button:has-text("Save")
+button[type="submit"]
+```
 
 ### Why This Approach?
 
-- **Avoids fragility** - Salesforce generates unstable CSS classes
-- **Resilient to updates** - Uses semantic HTML attributes
-- **Visible text priority** - Uses actual UI labels users see
-- **Graceful fallbacks** - Tries multiple selectors before failing
+- **Avoids fragility** — no generated CSS classes (Salesforce changes these frequently)
+- **Resilient to updates** — value-based radio selection is stable across releases
+- **Bilingual** — English and French label variants tried at every step
+- **Graceful fallbacks** — multiple strategies attempted before failing
 
 ## Error Handling
 

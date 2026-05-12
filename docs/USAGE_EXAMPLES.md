@@ -15,13 +15,11 @@ Expected output:
 Enabling Lead support in Territory Management
 Target Org: production
 Dry Run: false
-Retrieving organization authentication...
 Launching browser...
 Navigating to Territory Settings page...
 Detecting current Territory Settings state...
 Current State: Leads Enabled=false, Access=None
 Applying Territory Settings configuration...
-Configuration completed
 Territory Settings configured successfully
 New State: Leads Enabled=true, Access=ReadOnly
 Execution completed in 45230ms
@@ -73,10 +71,8 @@ sf territory lead enable --target-org production --debug
 
 This will:
 - Print detailed logs to console
-- Save screenshots on each step
-- Show console output from browser
-- Display page errors
-- Save error screenshots automatically
+- Show browser console output and page errors
+- Save a screenshot automatically on any failure
 
 Check `screenshots/` directory for captured images.
 
@@ -168,23 +164,23 @@ fi
 
 ### JSON Output Parsing
 
-The command returns JSON - use jq to parse:
+Use `--json` to get structured output, then parse with jq. The result is wrapped as `{ status, result }`:
 
 ```bash
 # Get just the success status
-sf territory lead enable --target-org production | jq '.success'
+sf territory lead enable --target-org production --json | jq '.result.success'
 
 # Get the message
-sf territory lead enable --target-org production | jq '.message'
+sf territory lead enable --target-org production --json | jq '.result.message'
 
 # Get detected state before changes
-sf territory lead enable --target-org production | jq '.detectedState'
+sf territory lead enable --target-org production --json | jq '.result.detectedState'
 
 # Get applied changes
-sf territory lead enable --target-org production | jq '.appliedChanges'
+sf territory lead enable --target-org production --json | jq '.result.appliedChanges'
 
 # Get execution time
-sf territory lead enable --target-org production | jq '.executionTimeMs'
+sf territory lead enable --target-org production --json | jq '.result.executionTimeMs'
 ```
 
 ### Conditional Execution
