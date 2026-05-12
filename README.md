@@ -146,13 +146,11 @@ The command returns a JSON result with:
 Enabling Lead support in Territory Management
 Target Org: myOrg
 Dry Run: false
-Retrieving organization authentication...
 Launching browser...
 Navigating to Territory Settings page...
 Detecting current Territory Settings state...
 Current State: Leads Enabled=false, Access=None
 Applying Territory Settings configuration...
-Configuration completed
 Territory Settings configured successfully
 New State: Leads Enabled=true, Access=ReadOnly
 Execution completed in 45230ms
@@ -163,12 +161,12 @@ Execution completed in 45230ms
 ### Project Structure
 
 ```
+messages/
+└── territory.lead.enable.json        # Help text & examples
 src/
 ├── commands/
 │   └── territory/lead/
-│       ├── enable.ts                  # Main CLI command
-│       └── messages/
-│           └── territory.lead.enable.json  # Help text & examples
+│       └── enable.ts                 # Main CLI command
 ├── browser/
 │   ├── browserManager.ts              # Playwright lifecycle & navigation
 │   └── lightningWait.ts               # Lightning UI loading detection
@@ -298,10 +296,10 @@ npm run dev
 npm test
 
 # Watch mode
-npm test:watch
+npm run test:watch
 
 # Coverage report
-npm test:coverage
+npm run test:coverage
 ```
 
 ### Linting & Formatting
